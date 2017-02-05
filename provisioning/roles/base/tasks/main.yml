@@ -1,0 +1,64 @@
+---
+# This role installs and sets up base config
+
+- name: afegeix repositori
+  apt_repository: 
+    repo: 'ppa:mc3man/trusty-media'
+
+- name: Paquets de SW basics
+  apt: name={{ item }} state=present
+  with_items:
+    - git 
+    - nodejs 
+    - npm
+    - libcairo2-dev 
+    - libjpeg8-dev 
+    - libpango1.0-dev 
+    - libgif-dev 
+    - libpng-dev 
+    - build-essential 
+    - g++
+    - ffmpeg
+    - redis-server
+
+# Configuracio de sistema
+
+- name: Nom de la maquina
+  hostname: name={{fqdn}}
+
+- name: Actualitzacio de nodejs
+  npm:
+    name: n
+    global: yes
+
+- name: instal.lar node-gyp
+  npm: 
+    name: node-gyp
+    global: yes
+
+- name: Actualitzacio de nodejs pas 2
+  shell: n stable
+  become: yes
+
+- name: Descarregar audiogram
+  git:
+    repo: https://github.com/nypublicradio/audiogram.git
+    dest: /opt/audiogram
+
+- name: Instalar dependencies
+  shell: npm install 
+  args:
+    chdir: /opt/audiogram
+
+- name: Copiar fitxer d'arrancada
+  copy: 
+    src: roles/base/files/audiogram
+    dest: /etc/init.d/audiogram
+    owner: root
+    group: root
+    mode: 0744
+- name: Configurar i engegar audiogram
+  service:
+    name: audiogram
+    enabled: yes
+    state: started

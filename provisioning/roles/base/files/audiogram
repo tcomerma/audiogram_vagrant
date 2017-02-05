@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+# chkconfig: 35 90 12
+# description: audiogram
+#
+
+# Get function from functions library
+. /lib/lsb/init-functions
+
+# Start the service audiogram
+start() {
+        log_daemon_msg "Starting audiogram server: "
+        ps -ef | grep node | grep -v grep > /dev/null
+        if [ $? -eq 0 ]
+        then
+          log_failure_msg  "already running"
+        else
+          su --login --command 'cd /opt/audiogram;npm start >> /var/log/audiogram.stdout 2>&1' &
+          ### Create the lock file ###
+          touch /var/lock/audiogram
+          log_success_msg  "done"
+        fi
+}
+
+# Restart the service audiogram
+stop() {
+        log_daemon_msg "Stopping audiogram server: "
+        killall node
+        ### Now, delete the lock file ###
+        rm -f /var/lock/audiogram
+        log_success_msg "done"
+}
+
+status() {
+        log_daemon_msg "Status of audiogram server: "
+        ps -ef | grep node | grep -v grep > /dev/null
+        if [ $? -eq 0 ]
+        then
+          log_success_msg  "running"
+          exit 0
+        else
+          log_failure_msg  "not running"
+          exit 1ZZ
+        fi
+}
+
+### main logic ###
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  status)
+        status 
+        ;;
+  restart|reload|condrestart)
+        stop
+        start
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|restart|reload|status}"
+        exit 1
+esac
+
+exit 0
